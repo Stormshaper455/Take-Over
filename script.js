@@ -38,8 +38,8 @@
   }
 
   // Quiet time between incidents, in seconds.
-  const eventMinWait = 25;
-  const eventMaxWait = 45;
+  const eventMinWait = 15;
+  const eventMaxWait = 30;
   let feedbackTimer;
 
   // Takeover meter display and game controls.
@@ -50,7 +50,7 @@
   const meterStatus = meterPanel.querySelector(".takeover-status");
   let meterValue = 0;
   function setMeter(value) {
-    if (!Number.isFinite(value)) return meterValue;
+    if (state.finished || !Number.isFinite(value)) return meterValue;
     const previousValue = meterValue;
     meterValue = Math.min(100, Math.max(-100, Math.round(value)));
     let label = "Neutral";
@@ -65,14 +65,15 @@
     }
     const displayValue = meterValue > 0 ? "+" + meterValue : String(meterValue);
     meter.setAttribute("aria-valuenow", String(meterValue));
-    meter.setAttribute("aria-valuetext", `${displayValue} points — ${label}`);
+    meter.setAttribute("aria-valuetext", `${displayValue}% — ${label}`);
     fill.style.strokeDashoffset = String(100 - Math.abs(meterValue));
     meterPanel.style.setProperty("--takeover-color", color);
-    meterText.textContent = displayValue;
+    meterText.textContent = displayValue + "%";
     meterStatus.textContent = label;
     if (previousValue !== meterValue) {
       meter.dispatchEvent(new CustomEvent("takeoverchange", { bubbles: true, detail: { value: meterValue, previousValue } }));
     }
+    if (state.playing && meterValue <= -100) finishGame(false, "takeover");
     return meterValue;
   }
   function adjustMeter(points, good) {
@@ -99,6 +100,7 @@
   });
 
   function feedback(message, bad = false) {
+    if (state.finished) return;
     const toast = getElement("feedback-toast");
     toast.textContent = message;
     toast.classList.toggle("bad", bad);
@@ -169,7 +171,7 @@
     if (!canAct() || state.taskDone[2]) return;
     const correct = ["Finance", "Marketing", "HR"];
     correct.forEach((folder, index) => {
-      if (state.fileDone[index]) return;
+      if (state.finished || state.fileDone[index]) return;
       const choice = getElement("file-folder-" + index);
       if (choice.value === folder) {
         state.fileDone[index] = true;
@@ -266,6 +268,7 @@
     getElement("login-time").textContent = getElement("game-clock").textContent;
   }
   function scheduleNextEvent() {
+    if (state.finished) return;
     // Start a new break after the incident or its penalty has ended.
     state.nextEventAt = Date.now() + rand(eventMinWait, eventMaxWait) * 1000;
   }
@@ -302,9 +305,8 @@
   function openIncident(event) {
     if (event !== state.activeEvent || event.phase !== "incoming") return;
     event.phase = "responding";
-    if (event.type === "email") event.deadline = Date.now() + 20000;
-    if (event.type === "login") event.deadline = Date.now() + 15000;
-    // The original 10-second DDoS response deadline is kept until the first flush.
+    // Each incident gets five seconds once its app is opened.
+    event.deadline = Date.now() + 5000;
     getElement("event-toast").classList.add("hidden");
     refreshEventStatus();
   }
@@ -327,7 +329,6 @@
     if (!state.playing || !event || event.type !== "ddos" || event.phase !== "responding" || event.flushed.includes(index) || Date.now() >= event.deadline) return;
     event.flushed.push(index);
     window.takeoverMeter.goodAction(2);
-    if (event.flushed.length === 1) event.deadline = Date.now() + 22000;
     renderNetwork();
     if (event.flushed.length === event.count) { resolveIncident("Blocked DDoS traffic", true); feedback("All rate limits flushed. Network secured!"); }
   }
@@ -354,6 +355,7 @@
   getElement("approve-login").disabled = false;
 
   function createErrorPopups() {
+    if (state.finished) return;
     const layer = getElement("popup-layer");
     layer.replaceChildren();
     const coords = [[5,14],[37,8],[64,25],[12,42],[50,43],[25,66],[62,70]];
@@ -388,6 +390,7 @@
     refreshEventStatus();
   }
   function lockComputer() {
+    if (state.finished) return;
     state.lockedUntil = Date.now() + 6000;
     getElement("lock-layer").classList.remove("hidden");
     refreshEventStatus();
@@ -431,17 +434,28 @@
       if (now >= event.deadline) failIncident();
     } else if (now >= state.nextEventAt) beginIncident(pick(["ddos", "email", "login"]));
   }
-  function finishGame(won) {
+  function finishGame(won, reason = "time") {
     if (state.finished) return;
     state.finished = true;
+    state.playing = false;
+    state.activeEvent = null;
+    state.nextEventAt = Infinity;
+    clearTimeout(feedbackTimer);
+    getElement("feedback-toast").classList.add("hidden");
     getElement("event-toast").classList.add("hidden");
     getElement("popup-layer").classList.add("hidden");
     getElement("lock-layer").classList.add("hidden");
     getElement("end-layer").classList.remove("hidden");
-    getElement("end-title").textContent = won ? "Shift complete. You win!" : "5:00 PM. You're out of time.";
-    getElement("end-description").textContent = won ? "You finished all five assignments before 5 PM while protecting your workspace. Great job!" : "You still had unfinished assignments when the workday ended. Try again and watch those distractions.";
+    getElement("end-title").textContent = won ? "Shift complete. You win!" : "GAME OVER";
+    if (won) {
+      getElement("end-description").textContent = "You finished all five assignments before 5 PM while protecting your workspace. Great job!";
+    } else if (reason === "takeover") {
+      getElement("end-description").textContent = "Your takeover meter reached -100%. The system has been taken over. Try again!";
+    } else {
+      getElement("end-description").textContent = "It's 5:00 PM. Time ran out before you completed all five assignments. Try again!";
+    }
     getElement("end-tasks").textContent = `${state.taskDone.filter(Boolean).length} / 5 tasks`;
-    getElement("end-takeover").textContent = `${meterValue > 0 ? "+" : ""}${meterValue} security points`;
+    getElement("end-takeover").textContent = `${meterValue > 0 ? "+" : ""}${meterValue}% takeover`;
   }
   function resetGame() {
     // Clear everything from the previous shift before starting a new one.
@@ -480,8 +494,8 @@
     getElement("backup-result").textContent = "Waiting for backup selection.";
     getElement("countdown").textContent = "07:00";
     getElement("game-clock").textContent = "1:00 PM";
-    getElement("email-deadline").textContent = "20s left";
-    getElement("login-deadline").textContent = "15s left";
+    getElement("email-deadline").textContent = "5s left";
+    getElement("login-deadline").textContent = "5s left";
     ["email-from", "email-subject", "email-body", "login-name",
       "login-location", "login-device", "login-time"].forEach(id => {
       getElement(id).textContent = "";
