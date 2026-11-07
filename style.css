@@ -89,3 +89,79 @@ body {
     border-radius: 11px;
   }
 }
+
+/* Takeover meter: all styling stays inside the existing hub content. */
+.hub-content {
+  height: 100%;
+  overflow: auto;
+}
+
+.takeover {
+  --takeover-color: #7ce0bd;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(4px, 1vh, 12px);
+  padding: clamp(8px, 2vw, 24px);
+  color: #f1f0ff;
+  font-family: system-ui, sans-serif;
+  text-align: center;
+}
+
+.takeover-title {
+  margin: 0;
+  font-size: clamp(12px, 1.7vw, 22px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.takeover-meter {
+  position: relative;
+  width: clamp(80px, 19vw, 250px);
+  max-width: 100%;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+}
+
+.takeover-ring {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  fill: none;
+  stroke-width: 7;
+}
+
+.takeover-track { stroke: #ffffff18; }
+
+.takeover-fill {
+  stroke: var(--takeover-color);
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 450ms ease, stroke 450ms ease;
+}
+
+.takeover-value {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--takeover-color);
+  font-size: clamp(22px, 4.5vw, 58px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.takeover-status {
+  margin: 0;
+  font-size: clamp(11px, 1.3vw, 16px);
+  color: #dedbea;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .takeover-fill { transition: none; }
+}

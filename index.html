@@ -14,7 +14,19 @@
       <div class="screenBG" id="game-screen" aria-label="Game interface">
         <div class="hub-container">
           <div class="hubBG">
-            <div class="hub-content"></div>
+            <div class="hub-content">
+              <section class="takeover" aria-labelledby="takeover-title">
+                <h1 id="takeover-title" class="takeover-title">Takeover meter</h1>
+                <div class="takeover-meter" role="meter" aria-label="Takeover level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <svg class="takeover-ring" viewBox="0 0 120 120" aria-hidden="true">
+                    <circle class="takeover-track" cx="60" cy="60" r="52" />
+                    <circle class="takeover-fill" cx="60" cy="60" r="52" pathLength="100" />
+                  </svg>
+                  <span class="takeover-value" aria-hidden="true">0%</span>
+                </div>
+                <p class="takeover-status" role="status">System secure</p>
+              </section>
+            </div>
           </div>
         </div>
         
