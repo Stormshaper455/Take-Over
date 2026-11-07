@@ -9,7 +9,3 @@ Open `index.html` in a browser. No install is required. The starter displays a b
 - `index.html` — game screen and laptop layout
 - `style.css` — workstation background and laptop appearance
 - `script.js` — future game logic
-
-## Team collaboration
-
-The repository owner can invite a teammate through **Settings → Collaborators → Add people**. Once invited, collaborators can clone the repository and work on separate branches.
