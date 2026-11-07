@@ -69,7 +69,7 @@ body {
 
 .hub-container {
   width:auto;
-  height: 100%;
+  height: 90%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -78,8 +78,8 @@ body {
 .hubBG {
   background: #55559149;
   border-radius: 5px;
-  width: 100px;
-  height: 150px;
+  width: 90%;
+  height: 90%;
 }
 
 @media (max-width: 650px) {
