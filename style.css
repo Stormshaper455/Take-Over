@@ -1,0 +1,59 @@
+/* Page and background photo */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.station {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background:
+    linear-gradient(rgba(5, 10, 14, 0.68), rgba(5, 10, 14, 0.72)),
+    url("https://www.publicdomainpictures.net/pictures/780000/velka/cybersecurity-operations.jpg") center / cover no-repeat;
+}
+
+/* Laptop display frame */
+.laptop-screen {
+  position: relative;
+  width: min(92vw, 145vh, 1450px);
+  aspect-ratio: 16 / 9;
+  padding: 14px;
+  border: 1px solid #78817a;
+  border-radius: 18px;
+  background: #202522;
+  box-shadow: 0 22px 45px rgba(0, 0, 0, 0.58);
+}
+
+.camera {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #60736a;
+}
+
+/* Keep this white until you add the game interface. */
+.white-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  background: #fff;
+}
+
+@media (max-width: 650px) {
+  .laptop-screen {
+    width: 96vw;
+    padding: 7px;
+    border-radius: 11px;
+  }
+}
