@@ -1,6 +1,6 @@
 # Take-Over
 
-Our cybersecurity awareness game for a hackathon, built using HTML, CSS, and JavaScript.
+Our cybersecurity awareness game for a hackathon, built using HTML, CSS, and JavaScript for frontend. and python for backend
 
 ## Getting started
 
