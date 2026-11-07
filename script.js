@@ -22,6 +22,7 @@
     endAt: 0,
     nextEventAt: Infinity,
     taskDone: [false, false, false, false, false],
+    fileDone: [false, false, false],
     activeEvent: null,
     lockedUntil: 0,
     popupCount: 0,
@@ -37,8 +38,8 @@
   }
 
   // Quiet time between incidents, in seconds.
-  const eventMinWait = 35;
-  const eventMaxWait = 60;
+  const eventMinWait = 25;
+  const eventMaxWait = 45;
   let feedbackTimer;
 
   // Takeover meter display and game controls.
@@ -51,37 +52,49 @@
   function setMeter(value) {
     if (!Number.isFinite(value)) return meterValue;
     const previousValue = meterValue;
-    meterValue = Math.min(100, Math.max(0, Math.round(value)));
-    let label = "System secure";
-    let color = "#7ce0bd";
+    meterValue = Math.min(100, Math.max(-100, Math.round(value)));
+    let label = "Neutral";
+    let color = "#b8c9c4";
 
-    if (meterValue === 100) {
-      label = "System taken over";
+    if (meterValue > 0) {
+      label = "Positive security score";
+      color = "#7ce0bd";
+    } else if (meterValue < 0) {
+      label = "Negative security score";
       color = "#ff7d91";
-    } else if (meterValue >= 75) {
-      label = "Critical takeover risk";
-      color = "#ff7d91";
-    } else if (meterValue >= 40) {
-      label = "Takeover risk rising";
-      color = "#ffd180";
-    } else if (meterValue > 0) {
-      label = "Takeover detected";
     }
+    const displayValue = meterValue > 0 ? "+" + meterValue : String(meterValue);
     meter.setAttribute("aria-valuenow", String(meterValue));
-    meter.setAttribute("aria-valuetext", `${meterValue}% — ${label}`);
-    fill.style.strokeDashoffset = String(100 - meterValue);
+    meter.setAttribute("aria-valuetext", `${displayValue} points — ${label}`);
+    fill.style.strokeDashoffset = String(100 - Math.abs(meterValue));
     meterPanel.style.setProperty("--takeover-color", color);
-    meterText.textContent = `${meterValue}%`;
+    meterText.textContent = displayValue;
     meterStatus.textContent = label;
     if (previousValue !== meterValue) {
       meter.dispatchEvent(new CustomEvent("takeoverchange", { bubbles: true, detail: { value: meterValue, previousValue } }));
     }
     return meterValue;
   }
+  function adjustMeter(points, good) {
+    if (!Number.isFinite(points) || points < 0) return meterValue;
+    return setMeter(meterValue + (good ? points : -points));
+  }
+
+  function canAct() {
+    return state.playing && !state.finished &&
+      state.lockedUntil <= Date.now() && state.popupCount === 0;
+  }
+
+  function wrongTask(message) {
+    window.takeoverMeter.badAction(5);
+    state.mistakeCount++;
+    feedback(message, true);
+  }
+
   window.takeoverMeter = Object.freeze({
     set: setMeter,
-    badAction: (points = 10) => setMeter(meterValue + points),
-    goodAction: (points = 10) => setMeter(meterValue - points),
+    badAction: (points = 10) => adjustMeter(points, false),
+    goodAction: (points = 10) => adjustMeter(points, true),
     get value() { return meterValue; }
   });
 
@@ -133,37 +146,57 @@
   function finishTask(index) {
     if (!state.playing || state.finished || state.taskDone[index]) return;
     state.taskDone[index] = true;
+    window.takeoverMeter.goodAction(10);
     addLog(`Completed: ${tasks[index]}`);
     feedback(`${tasks[index]} completed!`);
     updateTasks();
   }
   getElement("finish-onboarding").addEventListener("click", () => {
-    if (getElement("access-role").value !== "Marketing") return feedback("Check Maya Chen's department in Company Info.", true);
+    if (!canAct() || state.taskDone[0]) return;
+    if (getElement("access-role").value !== "Marketing") return wrongTask("Check Maya Chen's department in Company Info.");
     getElement("access-role").disabled = true;
     getElement("finish-onboarding").disabled = true;
     finishTask(0);
   });
   getElement("finish-invoice").addEventListener("click", () => {
-    if (getElement("vendor-domain").value !== "northstaroffice.com") return feedback("That is not Northstar Office's verified domain.", true);
+    if (!canAct() || state.taskDone[1]) return;
+    if (getElement("vendor-domain").value !== "northstaroffice.com") return wrongTask("That is not Northstar Office's verified domain.");
     getElement("vendor-domain").disabled = true;
     getElement("finish-invoice").disabled = true;
     finishTask(1);
   });
   getElement("finish-files").addEventListener("click", () => {
+    if (!canAct() || state.taskDone[2]) return;
     const correct = ["Finance", "Marketing", "HR"];
-    if (!correct.every((folder, index) => getElement("file-folder-" + index).value === folder)) return feedback("One or more files are in the wrong folder.", true);
+    correct.forEach((folder, index) => {
+      if (state.fileDone[index]) return;
+      const choice = getElement("file-folder-" + index);
+      if (choice.value === folder) {
+        state.fileDone[index] = true;
+        choice.disabled = true;
+        window.takeoverMeter.goodAction(3);
+      } else {
+        window.takeoverMeter.badAction(5);
+        state.mistakeCount++;
+      }
+    });
+    if (!state.fileDone.every(Boolean)) {
+      return feedback("Correct files moved. Check the remaining folders.", true);
+    }
     correct.forEach((_, index) => getElement("file-folder-" + index).disabled = true);
     getElement("finish-files").disabled = true;
     finishTask(2);
   });
   getElement("finish-backup").addEventListener("click", () => {
-    if (getElement("backup-choice").value !== "Employee Records") return feedback("Select Employee Records for the daily backup.", true);
+    if (!canAct() || state.taskDone[3]) return;
+    if (getElement("backup-choice").value !== "Employee Records") return wrongTask("Select Employee Records for the daily backup.");
     getElement("backup-result").textContent = "✓ Employee records backup completed successfully.";
     getElement("backup-choice").disabled = true;
     getElement("finish-backup").disabled = true;
     finishTask(3);
   });
   getElement("finish-report").addEventListener("click", () => {
+    if (!canAct() || state.taskDone[4]) return;
     if (state.taskDone.slice(0, 4).every(Boolean)) finishTask(4);
   });
 
@@ -293,6 +326,7 @@
     const event = state.activeEvent;
     if (!state.playing || !event || event.type !== "ddos" || event.phase !== "responding" || event.flushed.includes(index) || Date.now() >= event.deadline) return;
     event.flushed.push(index);
+    window.takeoverMeter.goodAction(2);
     if (event.flushed.length === 1) event.deadline = Date.now() + 22000;
     renderNetwork();
     if (event.flushed.length === event.count) { resolveIncident("Blocked DDoS traffic", true); feedback("All rate limits flushed. Network secured!"); }
@@ -339,7 +373,9 @@
       close.textContent = "✕";
       close.setAttribute("aria-label", `Close security popup ${i + 1}`);
       close.addEventListener("click", () => {
+        if (!state.playing || state.finished || !popup.parentNode) return;
         popup.remove();
+        window.takeoverMeter.goodAction(1);
         state.popupCount--;
         if (state.popupCount === 0) { layer.classList.add("hidden"); scheduleNextEvent(); refreshEventStatus(); feedback("Popups cleared. Get back to work!"); }
       });
@@ -405,7 +441,7 @@
     getElement("end-title").textContent = won ? "Shift complete. You win!" : "5:00 PM. You're out of time.";
     getElement("end-description").textContent = won ? "You finished all five assignments before 5 PM while protecting your workspace. Great job!" : "You still had unfinished assignments when the workday ended. Try again and watch those distractions.";
     getElement("end-tasks").textContent = `${state.taskDone.filter(Boolean).length} / 5 tasks`;
-    getElement("end-takeover").textContent = `${meterValue}% takeover`;
+    getElement("end-takeover").textContent = `${meterValue > 0 ? "+" : ""}${meterValue} security points`;
   }
   function resetGame() {
     // Clear everything from the previous shift before starting a new one.
@@ -414,6 +450,7 @@
     state.endAt = 0;
     state.nextEventAt = Infinity;
     state.taskDone = [false, false, false, false, false];
+    state.fileDone = [false, false, false];
     state.activeEvent = null;
     state.lockedUntil = 0;
     state.popupCount = 0;

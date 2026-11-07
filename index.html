@@ -26,11 +26,11 @@
             <div class="side-heading"><span class="live-dot"></span> LIVE SYSTEM STATUS</div>
             <section class="takeover" aria-labelledby="takeover-title">
               <h2 id="takeover-title" class="takeover-title">Takeover meter</h2>
-              <div class="takeover-meter" role="meter" aria-label="Takeover level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div class="takeover-meter" role="meter" aria-label="Takeover security score" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0">
                 <svg class="takeover-ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="takeover-track" cx="60" cy="60" r="52"/><circle class="takeover-fill" cx="60" cy="60" r="52" pathLength="100"/></svg>
-                <span class="takeover-value" aria-hidden="true">0%</span>
+                <span class="takeover-value" aria-hidden="true">0</span>
               </div>
-              <p class="takeover-status" role="status">System secure</p>
+              <p class="takeover-status" role="status">Neutral</p>
             </section>
             <div class="side-divider"></div>
             <div class="sidebar-block"><span class="mini-label">CURRENT OBJECTIVE</span><strong id="side-objective">Start your shift</strong><span id="side-detail">Complete five tasks before 5 PM.</span></div>
@@ -92,10 +92,11 @@
         <div id="feedback-toast" class="feedback-toast hidden" role="status"></div>
         <div id="popup-layer" class="popup-layer hidden" aria-label="Security error popups"></div>
         <div id="lock-layer" class="lock-layer hidden" role="alert"><div class="lock-panel"><div class="lock-icon">⌧</div><h2>System temporarily locked</h2><p>Security controls are unavailable.</p><strong id="lock-seconds">6</strong><small>SECONDS REMAINING</small></div></div>
-        <div id="start-layer" class="start-layer"><div class="modal-card"><span class="modal-mark">TAKE OVER / 01</span><h1>Can you survive<br><em>the workday?</em></h1><p>It's 1:00 PM. You have <strong>7 real minutes</strong> to finish five tasks before 5:00 PM, while responding to phishing emails, network attacks, and suspicious logins.</p><ul><li>Use the bottom dock to switch apps.</li><li>Check Company Info before trusting emails or logins.</li><li>Wrong security decisions cost valuable time.</li></ul><button id="start-game" class="btn btn-primary btn-large">Start shift →</button></div></div>
-        <div id="end-layer" class="end-layer hidden"><div class="modal-card"><span class="modal-mark">SHIFT COMPLETE</span><h1 id="end-title">Shift ended</h1><p id="end-description"></p><div class="end-stats"><span id="end-tasks">0 / 5 tasks</span><span id="end-takeover">0% takeover</span></div><button id="play-again" class="btn btn-primary btn-large">Play again ↻</button></div></div>
+        <div id="start-layer" class="start-layer"><div class="modal-card"><span class="modal-mark">TAKE OVER / 01</span><h1>Can you survive<br><em>the workday?</em></h1><p>It's 1:00 PM. You have <strong>7 real minutes</strong> to finish five tasks before 5:00 PM, while responding to phishing emails, network attacks, and suspicious logins.</p><ul><li>Use the bottom dock to switch apps.</li><li>Check Company Info before trusting emails or logins.</li><li>Correct decisions add meter points. Incorrect decisions subtract points.</li><li>Green is above zero; red is below zero. Wrong security decisions also cost time.</li></ul><button id="start-game" class="btn btn-primary btn-large">Start shift →</button></div></div>
+        <div id="end-layer" class="end-layer hidden"><div class="modal-card"><span class="modal-mark">SHIFT COMPLETE</span><h1 id="end-title">Shift ended</h1><p id="end-description"></p><div class="end-stats"><span id="end-tasks">0 / 5 tasks</span><span id="end-takeover">0 security points</span></div><button id="play-again" class="btn btn-primary btn-large">Play again ↻</button></div></div>
       </div>
     </section>
   </main>
 </body>
 </html>
+
