@@ -1,5 +1,7 @@
 # Take Over
 
+http://127.0.0.1:5500/
+
 A playable, browser-based cybersecurity awareness mini game for our hackathon, built with plain HTML, CSS and JavaScript. No packages, server, or database required.
 
 ## Play
