@@ -6,7 +6,9 @@ A playable, browser-based cybersecurity awareness mini game for our hackathon, b
 
 Open `index.html` in a browser and press **Start shift**. You have 7 real minutes (1:00 PM to 5:00 PM in game) to complete five tasks. Use the apps in the laptop dock to switch between Tasks, Email, Company Info, Network, Security, Files, Backup, and Reports.
 
-Random security distractions interrupt your shift:
+Random security distractions interrupt your shift. The first event arrives after 50–85 seconds. After an incident and any resulting popups or lock are cleared, there is another random 50–85 second break. Only one incident can be active at a time.
+
+Security events:
 - **DDoS:** Open Network and flush 5–8 traffic alerts. Begin responding within 10 seconds. If you ignore the event or fail to finish, controls lock for 6 seconds.
 - **Emails:** Open Email within 10 seconds and Approve or Deny within the following 20 seconds. Verify sender domains under Company Info; even legitimate emails can have typos. Wrong or missed decisions cover the screen with seven popups you must close.
 - **Login attempts:** Open Security within 10 seconds and approve or block within 15 seconds. Compare the employee, device and location with Company Info. Wrong or missed decisions lock controls for 6 seconds.
@@ -20,3 +22,6 @@ All security events are **simulations** and do not perform real network, email, 
 - `script.js` — seven-minute timer, tasks, random security events, penalties, and game results
 
 For development/testing, opening `index.html?test=1` exposes `window.takeoverTest.trigger('ddos'|'email'|'login')` after pressing Start, so the incident UI can be previewed without waiting for a random event. These hooks aren't enabled in normal gameplay.
+
+
+The screen has a subtle, transparent scanline overlay that does not block clicks. To adjust the event pacing, change `eventMinWait` and `eventMaxWait` (seconds) in `script.js`.
