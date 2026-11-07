@@ -37,8 +37,8 @@
   }
 
   // Quiet time between incidents, in seconds.
-  const eventMinWait = 50;
-  const eventMaxWait = 85;
+  const eventMinWait = 35;
+  const eventMaxWait = 60;
   let feedbackTimer;
 
   // Takeover meter display and game controls.
@@ -407,17 +407,70 @@
     getElement("end-tasks").textContent = `${state.taskDone.filter(Boolean).length} / 5 tasks`;
     getElement("end-takeover").textContent = `${meterValue}% takeover`;
   }
+  function resetGame() {
+    // Clear everything from the previous shift before starting a new one.
+    state.playing = false;
+    state.finished = false;
+    state.endAt = 0;
+    state.nextEventAt = Infinity;
+    state.taskDone = [false, false, false, false, false];
+    state.activeEvent = null;
+    state.lockedUntil = 0;
+    state.popupCount = 0;
+    state.mistakeCount = 0;
+    state.eventCount = 0;
+
+    clearTimeout(feedbackTimer);
+    getElement("feedback-toast").classList.add("hidden");
+    getElement("feedback-toast").classList.remove("bad");
+    getElement("feedback-toast").textContent = "";
+    ["end-layer", "event-toast", "popup-layer", "lock-layer"].forEach(id => {
+      getElement(id).classList.add("hidden");
+    });
+    getElement("popup-layer").replaceChildren();
+    getElement("activity-log").replaceChildren();
+
+    const choices = ["access-role", "vendor-domain", "file-folder-0",
+      "file-folder-1", "file-folder-2", "backup-choice"];
+    choices.forEach(id => {
+      getElement(id).value = "";
+      getElement(id).disabled = false;
+    });
+    ["finish-onboarding", "finish-invoice", "finish-files", "finish-backup"].forEach(id => {
+      getElement(id).disabled = false;
+    });
+
+    getElement("backup-result").textContent = "Waiting for backup selection.";
+    getElement("countdown").textContent = "07:00";
+    getElement("game-clock").textContent = "1:00 PM";
+    getElement("email-deadline").textContent = "20s left";
+    getElement("login-deadline").textContent = "15s left";
+    ["email-from", "email-subject", "email-body", "login-name",
+      "login-location", "login-device", "login-time"].forEach(id => {
+      getElement(id).textContent = "";
+    });
+    setMeter(0);
+    renderNetwork();
+    renderEmail();
+    renderLogin();
+    refreshEventStatus();
+    updateTasks();
+  }
+
   function startGame() {
+    if (state.playing && !state.finished) return;
+    resetGame();
     state.playing = true;
     state.endAt = Date.now() + 420000;
     scheduleNextEvent();
     getElement("start-layer").classList.add("hidden");
+    openTab("tasks");
     addLog("Shift started at 1:00 PM");
     updateTasks();
     tick();
   }
   getElement("start-game").addEventListener("click", startGame);
-  getElement("play-again").addEventListener("click", () => window.location.reload());
+  getElement("play-again").addEventListener("click", startGame);
   setMeter(0);
   updateTasks();
   setInterval(tick, 200);
